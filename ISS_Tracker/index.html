@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leskaarten – Where is the Space Station? (NL)</title>
+  <meta name="description" content="Leskaarten in kaartvorm voor de les ‘Where is the Space Station?’ – Nederlandstalige versie met stappen, tips en Python-codevoorbeelden." />
+  <style>
+    :root{
+      --bg:#ffffff;
+      --ink:#0a0a0a;
+      --muted:#444;
+      --hint:#0a54b2;
+      --card:#f6f7fb;
+      --border:#e6e8ee;
+      --accent:#0a54b2;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font:16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink); background:var(--bg);
+    }
+    header{
+      padding:24px 16px; border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:var(--bg); z-index:3;
+    }
+    header h1{margin:0 0 4px; font-size:clamp(20px, 3vw, 28px)}
+    header p{margin:0; color:var(--muted)}
+    .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+    .actions button{
+      appearance:none; border:1px solid var(--border); background:#fff; color:var(--ink);
+      padding:8px 12px; border-radius:10px; cursor:pointer;
+    }
+    .actions button:hover{border-color:var(--accent)}
+    .actions button:focus-visible{outline:3px solid color-mix(in oklab, var(--accent) 25%, white); outline-offset:2px}
+
+    main{padding:24px 16px}
+    /* Eén kolom onder elkaar */
+    .grid{
+      --gap:16px;
+      display:grid; gap:var(--gap);
+      grid-template-columns: 1fr;
+    }
+
+    article.card{
+      background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px;
+    }
+    .kicker{font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; font-size:12px}
+    h2{margin:.25rem 0 .5rem; font-size:20px}
+    h3{margin:1rem 0 .25rem; font-size:16px}
+    p{margin:.5rem 0}
+    ul{margin:.5rem 0 .75rem .9rem}
+    code, pre{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
+    pre{background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px; overflow:auto}
+    .note{color:var(--muted); font-size:.95em}
+
+    .tip{
+      background:#fff; border:1px dashed var(--border); border-radius:12px; padding:10px; margin:.5rem 0;
+    }
+    .tip h3{margin:0 0 .25rem}
+
+    .tweak-toggle{ display:inline-flex; align-items:center; gap:.5rem; margin:.25rem 0; }
+    .tweak-toggle button{ border:1px solid var(--border); background:#fff; padding:6px 10px; border-radius:10px; cursor:pointer }
+    .tweak-toggle button:focus-visible{ outline:3px solid color-mix(in oklab, var(--accent) 25%, white); outline-offset:2px }
+
+    footer{padding:24px 16px; color:var(--muted)}
+
+    /* Afdrukken: A4 liggend, 2 kolommen; knoppen verbergen */
+    @media print{
+      :root{ --card:#fff }
+      body{ background:#fff }
+      header, .actions, .tweak-toggle{ display:none !important }
+      main{ padding:0 }
+      .grid{ grid-template-columns: 1fr 1fr; gap:12px }
+      article.card{ break-inside:avoid; border-color:#ddd; }
+
+      /* Alleen kaarten 1+2 of 3+4 tonen via body-data-attribuut */
+      body[data-print="12"] article.card[data-card] { display:none }
+      body[data-print="12"] article.card[data-card="1"],
+      body[data-print="12"] article.card[data-card="2"] { display:block }
+
+      body[data-print="34"] article.card[data-card] { display:none }
+      body[data-print="34"] article.card[data-card="3"],
+      body[data-print="34"] article.card[data-card="4"] { display:block }
+    }
+  
+    /* Rijke tips panel */
+    .tips-panel{ background:#fff; border:2px solid var(--border); border-radius:14px; padding:12px; margin:.75rem 0 }
+    .tips-panel h3{ margin:.5rem 0 .25rem; font-size:15px }
+    .tips-panel .row{ display:grid; grid-template-columns: 1fr; gap:.5rem }
+    .tips-panel .callout{ background: #fdfdfd; border:1px dashed var(--border); border-radius:10px; padding:8px }
+    .tips-toggle{ border:1px solid var(--border); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+    .tips-toggle:focus-visible{ outline:3px solid color-mix(in oklab, var(--accent) 25%, white); outline-offset:2px }
+    .checklist{ list-style:none; padding-left:0; margin:.25rem 0 .5rem }
+    .checklist li::before{ content:"▢ "; }
+    .checklist li.done::before{ content:"☑ "; }
+    .muted{ color:var(--muted) }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Where is the Space Station? – Leskaarten (NL)</h1>
+    <p class="note">Gebruik deze kaarten om stap voor stap een Python‑programma te maken dat de Internationale Ruimtestation (ISS) op een wereldkaart toont, met live gegevens van openbare web‑API’s.</p>
+    <div class="actions" aria-label="Snelkoppelingen">
+      <button class="js-print-12" type="button" title="Print kaarten 1 + 2">Print 1 + 2 (A4 liggend)</button>
+      <button class="js-print-34" type="button" title="Print kaarten 3 + 4">Print 3 + 4 (A4 liggend)</button>
+      <button class="js-reset" type="button" title="Toon alle kaarten">Alles tonen</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid">
+
+      <!-- Kaart 1 -->
+      <article class="card" data-card="1" aria-labelledby="k1">
+        <div class="kicker">Stap 1</div>
+        <h2 id="k1">Wie is er in de ruimte?</h2>
+        <p>Open de webservice die live informatie levert over astronauten in de ruimte:</p>
+        <p><code>http://api.open-notify.org/astros.json</code></p>
+        <p>In plaats van HTML levert dit adres <em>gegevens</em> (JSON). Je gaat dezelfde service vanuit Python aanroepen.</p>
+
+        <h3>Python‑code</h3>
+        <pre><code class="language-python">import requests
+import turtle
+
+# URL van de webservice
+url = "http://api.open-notify.org/astros.json"
+
+# Aanroepen en JSON laden
+astros = requests.get(url, timeout=10).json()
+
+print(astros)  # bekijk de ruwe data
+
+# Nettere weergave
+num = astros["number"]
+print(f"Mensen in de ruimte: {num}")
+people = astros["people"]
+for p in people:
+    name = p["name"]
+    craft = p["craft"]
+    print(f"{name} in {craft}")
+</code></pre>
+
+<button type="button" class="tips-toggle" aria-expanded="false" aria-controls="tips-1">Toon tips</button>
+<div id="tips-1" class="tips-panel" hidden>
+<h3>Wat moet ik hier doen?</h3>
+<ol><li>Roep de API aan met <code>requests.get(...).json()</code>.</li><li>Lees <code>number</code> en <code>people</code> uit de dict.</li><li>Print elk item als <code>naam in ruimtevaartuig</code>.</li></ol>
+<h3>Succescheck</h3>
+<ul class="checklist"><li>Console toont <em>Mensen in de ruimte: &lt;getal&gt;</em>.</li><li>Je ziet minstens één regel met een naam en <code>craft</code>.</li></ul>
+<h3>Veelgemaakte fout → fix</h3>
+<div class='callout'><b>Fout:</b> KeyError: 'people'<br><b>Fix:</b> Je gebruikt waarschijnlijk de rauwe tekst. Vergeet <code>.json()</code> niet of print eerst <code>type(astros)</code>.</div><div class='callout'><b>Fout:</b> Timeout / netwerkfout<br><b>Fix:</b> Voeg <code>timeout=10</code> toe en probeer later opnieuw.</div>
+<h3>Verwachte output (voorbeeld)</h3>
+<pre><code>Mensen in de ruimte: 7
+Jasmin Moghbeli in ISS
+... </code></pre>
+<h3>Conceptueel: Waarom JSON?</h3>
+<p>JSON is taal‑agnostisch en compact. In Python wordt het automatisch een <code>dict</code> (sleutels) met lijsten. Dit maakt doorlopen met <code>for</code> eenvoudig.</p>
+<h3>Differentiatie</h3>
+<ul><li><b>Uitdaging:</b> Sorteer op <code>craft</code> en tel per voertuig.</li><li><b>Stap‑voor‑stap nodig?</b> Print eerst <code>astros.keys()</code>, daarna <code>len(astros['people'])</code>.</li></ul>
+<h3>⏱️ Timer & hulp</h3>
+<p class='muted'>6–8 min. Zit je na 4 min vast? Controleer: (1) internet, (2) <code>.json()</code>, (3) sleutelnaam exact gespeld.</p>
+</div>
+      </article>
+
+      <!-- Kaart 2 -->
+      <article class="card" data-card="2" aria-labelledby="k2">
+        <div class="kicker">Stap 2</div>
+        <h2 id="k2">Waar is het ISS?</h2>
+        <p>Open in je browser de locatiedienst:</p>
+        <p><code>http://api.open-notify.org/iss-now.json</code></p>
+        <p>Roep een andere service aan vanuit Python en haal de positie van het ISS in breedte‑ en lengtegraad op.</p>
+
+        <h3>Python‑code</h3>
+        <pre><code class="language-python"># Locatie van de ISS ophalen
+url = "http://api.open-notify.org/iss-now.json"
+iss_now = requests.get(url, timeout=10).json()
+
+location = iss_now["iss_position"]
+lat = float(location["latitude"])
+lon = float(location["longitude"])
+print(f"Breedtegraad: {lat}°")
+print(f"Lengtegraad: {lon}°")
+</code></pre>
+
+<button type="button" class="tips-toggle" aria-expanded="false" aria-controls="tips-2">Toon tips</button>
+<div id="tips-2" class="tips-panel" hidden>
+<h3>Wat moet ik hier doen?</h3>
+<ol><li>Roep <code>iss-now.json</code> aan.</li><li>Lees <code>iss_position</code> en converteer strings naar <code>float</code> voor <code>lat</code> en <code>lon</code>.</li><li>Print beide met graden‑symbool.</li></ol>
+<h3>Succescheck</h3>
+<ul class="checklist"><li>Console toont twee getallen binnen bereik: lat ∈ [−90, 90], lon ∈ [−180, 180].</li><li>Geen <code>ValueError</code> bij conversie.</li></ul>
+<h3>Veelgemaakte fout → fix</h3>
+<div class='callout'><b>Fout:</b> <code>TypeError: float(None)</code><br><b>Fix:</b> Print eerst <code>iss_now</code> en check pad: <code>['iss_position']['latitude']</code>.</div>
+<h3>Waarom <code>float</code>?</h3>
+<p>De API levert getallen als tekst. Voor rekenwerk en tekenen met Turtle heb je numerieke types nodig.</p>
+<h3>Differentiatie</h3>
+<ul><li><b>Uitdaging:</b> Format output op 4 decimalen en voeg noorder/zuider, ooster/wester toe.</li><li><b>Stap‑voor‑stap:</b> Doe eerst alleen <code>print(iss_now)</code>; haal daarna stap voor stap velden eruit.</li></ul>
+<h3>⏱️ Timer & hulp</h3>
+<p class='muted'>5–7 min. Vast? Controleer paden en dat je <code>float(...)</code> gebruikt.</p>
+</div>
+      </article>
+
+      <!-- Kaart 3 -->
+      <article class="card" data-card="3" aria-labelledby="k3">
+        <div class="kicker">Stap 3</div>
+        <h2 id="k3">Plot het ISS op een kaart</h2>
+        <p>Gebruik Python Turtle om een wereldkaart als achtergrond te laden en zet de wereldcoördinaten gelijk aan lengte‑ en breedtegraden.</p>
+        <h3>Python‑code</h3>
+        <pre><code class="language-python"># Achtergrond (NASA Visible Earth – kaart 720×360)
+screen = turtle.Screen()
+screen.setup(1306, 654)
+screen.setworldcoordinates(-180, -90, 180, 90)
+screen.bgpic("map.gif")
+
+# ISS-icoon
+screen.register_shape("iss.gif")
+iss = turtle.Turtle()
+iss.shape("iss.gif")
+iss.setheading(90)
+iss.penup()
+
+# Verplaats naar huidige locatie (x=lon, y=lat)
+iss.goto(lon, lat)
+</code></pre>
+
+<button type="button" class="tips-toggle" aria-expanded="false" aria-controls="tips-3">Toon tips</button>
+<div id="tips-3" class="tips-panel" hidden>
+<h3>Wat moet ik hier doen?</h3>
+<ol><li>Maak een Turtle‑<code>Screen</code> en zet wereldcoördinaten op (−180, −90, 180, 90).</li><li>Laad <code>map.gif</code> als achtergrond en registreer <code>iss.gif</code>.</li><li>Plaats de turtle op <code>(lon, lat)</code>.</li></ol>
+<h3>Succescheck</h3>
+<ul class="checklist"><li>Je ziet een wereldkaart met het ISS‑icoon ongeveer op de juiste plek.</li><li>Vensterafmeting ≈ 1306×654 en vervormt de kaart niet.</li></ul>
+<h3>Veelgemaakte fout → fix</h3>
+<div class='callout'><b>Fout:</b> Plaatsing omgedraaid (lat, lon).<br><b>Fix:</b> Gebruik <code>goto(lon, lat)</code>.</div><div class='callout'><b>Fout:</b> Bestanden niet gevonden.<br><b>Fix:</b> Zorg dat <code>map.gif</code> en <code>iss.gif</code> in dezelfde map staan als je script.</div>
+<h3>Conceptueel: Projectie</h3>
+<p>Door <code>setworldcoordinates(-180, -90, 180, 90)</code> te gebruiken, map je pixel‑x op lengtegraad en pixel‑y op breedtegraad.</p>
+<h3>Differentiatie</h3>
+<ul><li><b>Uitdaging:</b> Laat het icoon elke 5 s naar nieuwe coördinaten bewegen.</li><li><b>Stap‑voor‑stap:</b> Test eerst zonder iconen; gebruik een standaardvorm <code>turtle.Turtle()</code> met <code>shape('circle')</code>.</li></ul>
+<h3>⏱️ Timer & hulp</h3>
+<p class='muted'>7–10 min. Vast? Test <code>goto(0,0)</code> (snijpunt evenaar/meridiaan) om je schaal te checken.</p>
+</div>
+        <p class="note">Let op: normaal noteer je (lat, lon), maar voor (x, y) gebruik je (lon, lat).</p>
+      </article>
+
+      <!-- Kaart 4 / Data toevoegen -->
+      <article class="card" data-card="4" aria-labelledby="k4">
+        <div class="kicker">Stap 4</div>
+        <h2 id="k4">Voeg gegevens toe aan je kaart</h2>
+        <p>Schrijf extra informatie op de kaart, zoals het aantal mensen in de ruimte of de ISS‑coördinaten.</p>
+        <h3>Python‑code</h3>
+        <pre><code class="language-python"># Eén turtle voor alle tekst
+writer = turtle.Turtle()
+writer.hideturtle()
+writer.penup()
+writer.color("yellow")
+
+# Schrijf label naast de ISS
+writer.goto(lon + 5, lat + 5)
+writer.pendown()
+writer.write(f"ISS-informatie\nAstronauten: {num}\nLat: {lat:.1f}°\nLon: {lon:.1f}°")
+writer.penup()
+</code></pre>
+
+<button type="button" class="tips-toggle" aria-expanded="false" aria-controls="tips-4">Toon tips</button>
+<div id="tips-4" class="tips-panel" hidden>
+<h3>Wat moet ik hier doen?</h3>
+<ol><li>Maak één schrijvende turtle voor labels.</li><li>Kies een contrasterende <code>color()</code>.</li><li>Schrijf een meerregelig label naast het ISS met <code>\n</code>.</li></ol>
+<h3>Succescheck</h3>
+<ul class="checklist"><li>Label verschijnt dicht bij de ISS‑positie en overlapt het icoon niet.</li><li>Tekst gebruikt afronding (bijv. <code>{lat:.1f}</code>).</li></ul>
+<h3>Veelgemaakte fout → fix</h3>
+<div class='callout'><b>Fout:</b> Label blijft tekenen over de kaart.<br><b>Fix:</b> Gebruik <code>penup()</code> vóór verplaatsen en na <code>write()</code>.</div>
+<h3>Conceptueel: Nieuwe regel</h3>
+<p><code>"\n"</code> creëert een regelbreuk binnen dezelfde <code>write()</code>‑aanroep.</p>
+<h3>Differentiatie</h3>
+<ul><li><b>Uitdaging:</b> Voeg lokale tijd toe met <code>datetime</code>.</li><li><b>Stap‑voor‑stap:</b> Begin met één regel tekst; breid daarna uit.</li></ul>
+<h3>⏱️ Timer & hulp</h3>
+<p class='muted'>4–6 min. Vast? Schakel tijdelijk een felle kleur in (bv. wit) om zichtbaar te testen.</p>
+</div>
+      </article>
+
+    
+      <!-- Kaart 5 / Compleet script -->
+      <article class="card" data-card="5" aria-labelledby="k5">
+        <div class="kicker">Stap 5</div>
+        <h2 id="k5">Compleet script</h2>
+        <p>Dit script combineert alle stappen: het haalt live data op (astronauten en ISS‑locatie), toont de ISS op de kaart en schrijft een label met coördinaten.</p>
+        <h3>Python-code</h3>
+        <pre><code class="language-python">import requests
+import turtle
+
+# --- Data ophalen ---
+astros = requests.get("http://api.open-notify.org/astros.json", timeout=10).json()
+iss_now = requests.get("http://api.open-notify.org/iss-now.json", timeout=10).json()
+
+num = astros["number"]
+loc = iss_now["iss_position"]
+lat = float(loc["latitude"])   # breedtegraad
+lon = float(loc["longitude"])  # lengtegraad
+
+# --- Tekstuele feedback in de console ---
+print(f"Mensen in de ruimte: {num}")
+for p in astros["people"]:
+    name = p["name"]
+    craft = p["craft"]
+    print(f"{name} in {craft}")
+print(f"Breedtegraad: {lat}°")
+print(f"Lengtegraad: {lon}°")
+
+# --- Tekenvenster en kaart ---
+screen = turtle.Screen()
+screen.setup(1306, 654)
+screen.setworldcoordinates(-180, -90, 180, 90)
+screen.bgpic("map.gif")
+
+# --- ISS icoon ---
+screen.register_shape("iss.gif")
+iss = turtle.Turtle()
+iss.shape("iss.gif")
+iss.setheading(90)
+iss.penup()
+iss.goto(lon, lat)
+
+# --- Label (één turtle) ---
+writer = turtle.Turtle()
+writer.hideturtle()
+writer.penup()
+writer.color("yellow")
+writer.goto(lon + 5, lat + 5)
+writer.pendown()
+writer.write(f"ISS-informatie\nAstronauten: {num}\nLat: {lat:.1f}°\nLon: {lon:.1f}°")
+writer.penup()
+
+# Venster open houden (klik om te sluiten)
+screen.exitonclick()
+</code></pre>
+
+<button type="button" class="tips-toggle" aria-expanded="false" aria-controls="tips-5">Toon tips</button>
+<div id="tips-5" class="tips-panel" hidden>
+<h3>Wat moet ik hier doen?</h3>
+<ol><li>Combineer alle stappen in één script.</li><li>Houd het venster open met <code>screen.exitonclick()</code>.</li></ol>
+<h3>Succescheck</h3>
+<ul class="checklist"><li>Script runt zonder fouten en toont kaart, icoon en label.</li><li>Console toont astronautenlijst en coördinaten.</li></ul>
+<h3>Veelgemaakte fout → fix</h3>
+<div class='callout'><b>Fout:</b> Scherm sluit direct.<br><b>Fix:</b> Voeg <code>screen.exitonclick()</code> toe.</div><div class='callout'><b>Fout:</b> Onjuiste imports.<br><b>Fix:</b> Zorg dat <code>import requests</code> en <code>import turtle</code> bovenaan staan.</div>
+<h3>Robuustheid (optioneel)</h3>
+<pre><code class='language-python'>try:\n    astros = requests.get(\"http://api.open-notify.org/astros.json\", timeout=10).json()\nexcept Exception as e:\n    print(\"Kon astronautendata niet laden:\", e)\n    astros = {\"number\": 0, \"people\": []}\n</code></pre>
+<h3>⏱️ Timer & hulp</h3>
+<p class='muted'>8–12 min. Klaar? Voeg een <em>refresh</em> toe om de positie te updaten.</p>
+</div>
+      </article>
+
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>Bron & licentie:</strong> Gebaseerd op “Where is the Space Station?” van de Raspberry Pi Foundation (CC BY‑SA 4.0). Deze Nederlandstalige kaarten volgen dezelfde leerstappen en gebruiken dezelfde openbare API‑endpoints.</p>
+  </footer>
+
+  
+  <script>
+    // Print helpers
+    const setPrintMode = (mode) => {
+      if (mode === "12" || mode === "34") {
+        document.body.setAttribute("data-print", mode);
+        window.print();
+        document.body.removeAttribute("data-print");
+      } else {
+        document.body.removeAttribute("data-print");
+      }
+    };
+
+    document.querySelector(".js-print-12")?.addEventListener("click", () => setPrintMode("12"));
+    document.querySelector(".js-print-34")?.addEventListener("click", () => setPrintMode("34"));
+    document.querySelector(".js-reset")?.addEventListener("click", () => setPrintMode(null));
+
+    // Gestandaardiseerde Toon/Verberg tips (één knop per kaart)
+    window.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".tips-toggle").forEach((btn) => {
+        const id = btn.getAttribute("aria-controls");
+        const panel = id ? document.getElementById(id) : null;
+        if (panel) panel.hidden = true;
+        const setLabel = () => {
+          const expanded = btn.getAttribute("aria-expanded") === "true";
+          btn.textContent = expanded ? "Verberg tips" : "Toon tips";
+        };
+        setLabel();
+        btn.addEventListener("click", () => {
+          const expanded = btn.getAttribute("aria-expanded") === "true";
+          btn.setAttribute("aria-expanded", String(!expanded));
+          if (panel) panel.hidden = expanded;
+          setLabel();
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
