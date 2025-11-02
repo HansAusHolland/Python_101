@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<title>Leskaarten — Hallo 🌍🌎🌏 (Python &amp; emoji) — printvriendelijk</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<style>
+  :root{
+    --fg:#111;
+    --muted:#444;
+    --accent:#0a7cff;
+    --bg:#fff;
+    --card:#fafafa;
+    --border:#e6e6e6;
+    --hint:#f5faff;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+    color:var(--fg);
+    background:var(--bg);
+    margin:24px;
+    line-height:1.5;
+  }
+  header{ margin-bottom:16px; display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+  h1{ font-size:26px; margin:0 0 6px 0; }
+  .meta{ color:var(--muted); font-size:14px; margin-bottom:12px; }
+  .actions{ margin-left:auto; }
+  .actions button{
+    appearance:none; border:1px solid var(--border); background:#fff; color:#111; padding:8px 12px; border-radius:10px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.05);
+  }
+  .actions button:hover{ border-color:#bbb; }
+
+  /* Exactly 3 columns per row on screen */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:16px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  h2{ margin:0 0 10px 0; font-size:18px; }
+  h3{ margin:12px 0 6px 0; font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  p{ margin: 8px 0; }
+  code, pre{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace, "Noto Color Emoji"; font-size:14px; }
+  pre{
+    white-space:pre-wrap;
+    background:#fff;
+    border:1px dashed var(--border);
+    padding:12px;
+    border-radius:10px;
+    margin:8px 0 0 0;
+  }
+  .footer{ margin-top:18px; color:var(--muted); font-size:12px; }
+  .breaker{ height:1px; background:var(--border); margin:12px 0; }
+
+  /* --- Tweaks styling (compact docent-/leerlinghints) --- */
+  .tweaks{ background:var(--hint); border:1px solid #d9ecff; padding:10px 12px; border-radius:12px; margin-top:10px; }
+  .tweaks h4{ margin:0 0 6px 0; font-size:14px; color:#0a54b2; }
+  .tweaks ul{ margin:6px 0 0 18px; padding:0; }
+  .tweaks li{ margin:2px 0; }
+  .tweaks .mini{ display:grid; grid-template-columns: 1fr; gap:6px; }
+  .tweaks .tag{ display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#fff; color:#333; }
+  .tweaks .expected{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace, "Noto Color Emoji"; font-size:12px; background:#fff; border:1px dashed var(--border); padding:6px 8px; border-radius:8px; }
+  .starttips{ background:#fff; border:1px solid var(--border); padding:10px 12px; border-radius:12px; }
+
+  /* PRINT: 2 kaarten per A4 landscape (1+2 of 3+4) */
+  @media print {
+    @page { size: A4 landscape; margin:10mm; }
+    .no-print, .actions { display:none !important; }
+    body { margin:0; }
+    .grid{ grid-template-columns: repeat(2, 1fr) !important; gap:12px; }
+    .card{ padding:14px; break-inside: avoid; page-break-inside: avoid; box-shadow:none; }
+    .tweaks{ background:#fff !important; }
+
+    /* Toon alleen de gewenste paren tijdens print */
+    body.print-12 .card:not([data-opdracht="1"]):not([data-opdracht="2"]) { display:none !important; }
+    body.print-34 .card:not([data-opdracht="3"]):not([data-opdracht="4"]) { display:none !important; }
+
+    /* Schaal typografie iets omlaag voor papier */
+    h1{ font-size:20px; }
+    h2{ font-size:16px; }
+    h3, p, code, pre, .tweaks, .tweaks .expected{ font-size:12px; }
+  }
+
+  /* Responsief voor kleine schermen */
+  @media (max-width: 900px) {
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+/* --- Toggle tweaks (per kaart) --- */
+.tweak-toggle{
+  appearance:none; border:1px solid var(--border); background:#fff; color:#111;
+  padding:6px 10px; border-radius:999px; cursor:pointer; font-size:13px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05); margin:8px 0 6px 0;
+}
+.tweak-toggle[aria-expanded="true"]{ background:var(--hint); border-color:#d9ecff; }
+.tweaks.is-hidden{ display:none !important; }
+/* Always show tweaks when printing */
+@media print {
+  .tweak-toggle{ display:none !important; }
+  .tweaks{ display:block !important; }
+}
+
+/* --- Force single-column card layout --- */
+.cards, .cards-grid, .cards-wrap, .grid, .deck, .wrapper, .wrap, .rows, .row, .container, .cards-container, main, .content {
+  display: block !important;
+  grid-template-columns: none !important;
+  column-count: 1 !important;
+}
+.card {
+  float: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 16px !important;
+  break-inside: avoid !important;
+}
+/* In case a parent enforces flex or grid, stack children */
+.cards, .cards-grid, .grid, .deck, .wrapper, .wrap, .rows, .row, .cards-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+/* Ensure print also stacks cleanly */
+@media print {
+  .card { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header>
+<div>
+<h1>Leskaarten — Hallo 🌍🌎🌏 (Python &amp; emoji)</h1>
+<div class="meta">Voer na elke stap de code uit. ✨</div>
+<!-- Tweaks #1: Voor je start -->
+<div class="starttips">
+<strong>Voor je start</strong> — Open <b>Thonny</b> → plak de startcode → <b>Sla op</b> → druk <b>F5</b>.<br/>
+        Zie je ▢ i.p.v. emoji? Kies in Thonny een lettertype met emoji-ondersteuning (bijv. Segoe UI Emoji / Apple Color Emoji).
+      </div>
+</div>
+<div class="actions no-print">
+<button onclick="printPair('12')">Print 1+2 (A4 landscape)</button>
+<button onclick="printPair('34')">Print 3+4 (A4 landscape)</button>
+</div>
+</header>
+<section class="grid">
+<!-- Card 1 -->
+<article class="card" data-opdracht="1">
+<h2>1) Output &amp; variabelen</h2>
+<h3>Kort</h3>
+<p>Met <code>print()</code> laat je tekst zien. Met een <strong>f-string</strong> kun je variabelen (zoals emoji’s) in je zin zetten.</p>
+<div class="breaker"></div>
+<h3>OPDRACHT</h3>
+<pre># Zet de code om uit te voeren hieronder
+print(f"Hallo")</pre>
+<p><em>Test:</em> Klik op <strong>Run</strong>. Je zou <strong>Hallo</strong> moeten zien.</p>
+<pre># Zet de code om uit te voeren hieronder
+print(f"Hallo {wereld}")</pre>
+<p><em>Voeg nog een regel toe:</em></p>
+<pre># Zet de code om uit te voeren hieronder
+print(f"Hallo {wereld}")
+print(f"Welkom bij {python}")</pre>
+<!-- Tweaks 2–6 -->
+<button aria-controls="tweaks-1" aria-expanded="false" class="tweak-toggle no-print" type="button">Toon tips</button><div class="tweaks is-hidden" id="tweaks-1">
+<div class="mini">
+<div><h4>Wat moet ik hier doen?</h4>
+<ul>
+<li>Voer de drie printregels uit (laatste twee met f-string).</li>
+<li>Gebruik de variabelen uit de startcode (<code>wereld</code>, <code>python</code>).</li>
+</ul>
+</div>
+<div><h4>Succescheck</h4>
+<ul>
+<li>☐ Geen foutmelding.</li>
+<li>☐ Je ziet “Hallo”, “Hallo 🌍🌎🌏” en “Welkom bij Python 🐍”.</li>
+</ul>
+</div>
+<div><h4>Veelgemaakte fout → fix</h4>
+<div class="tag">Vergeten <code>f</code> bij f-string → zet <code>f"..."</code>.</div>
+</div>
+<div><h4>Verwachte output</h4>
+<div class="expected">Hallo<br/>Hallo 🌍🌎🌏<br/>Welkom bij Python 🐍</div>
+</div>
+<div><h4>Timer &amp; hulp</h4>
+<div class="tag">⏱️ 6–8 min</div> <span>Vast? → Kijk of je de <code>f</code> hebt gezet en of de variabelen bestaan.</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="card" data-opdracht="2">
+<h2>2) Rekenen &amp; datum/tijd</h2>
+<h3>Kort</h3>
+<p>Python kan rekenen met <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>**</code>. Daarna laat je de huidige tijd zien met <code>datetime.now()</code>.</p>
+<div class="breaker"></div>
+<h3>OPDRACHT</h3>
+<pre># Zet de code om uit te voeren hieronder
+print(f"Hallo {wereld}")
+print(f"Welkom bij {python}")
+print(f"{python} is goed in wiskunde!")
+print(f"{3 * 9}")</pre>
+<p><em>Voeg toe:</em></p>
+<pre>print(f"{python} is goed in wiskunde!")
+print(f"{3 * 9}")
+print(f"De datum en tijd is {datetime.now()}")</pre>
+<p><em>Test:</em> voer je code een paar keer uit en kijk hoe de tijd verandert.</p>
+<!-- Tweaks 2–6 -->
+<button aria-controls="tweaks-2" aria-expanded="false" class="tweak-toggle no-print" type="button">Toon tips</button><div class="tweaks is-hidden" id="tweaks-2">
+<div class="mini">
+<div><h4>Wat moet ik hier doen?</h4>
+<ul>
+<li>Print een som en toon daarna de huidige datum/tijd.</li>
+<li>Voer je bestand 2–3× uit en vergelijk de tijdregels.</li>
+</ul>
+</div>
+<div><h4>Succescheck</h4>
+<ul>
+<li>☐ Rekenuitkomst zichtbaar (bijv. 27).</li>
+<li>☐ Tijdregel verandert bij opnieuw uitvoeren.</li>
+</ul>
+</div>
+<div><h4>Veelgemaakte fout → fix</h4>
+<div class="tag"><code>datetime.now</code> zonder haakjes → gebruik <code>datetime.now()</code>.</div>
+</div>
+<div><h4>Verwachte output</h4>
+<div class="expected">Python 🐍 is goed in wiskunde!<br/>27<br/>De datum en tijd is 2025-11-02 12:34:56.789012</div>
+</div>
+<div><h4>Timer &amp; hulp</h4>
+<div class="tag">⏱️ 6–8 min</div> <span>Vast? → Kijk of je getallen buiten quotes hebt staan.</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="card" data-opdracht="3">
+<h2>3) Functie maken &amp; aanroepen</h2>
+<h3>Kort</h3>
+<p>Een <strong>functie</strong> is een herbruikbaar blokje code. Regels binnen de functie zijn ingesprongen (4 spaties).</p>
+<div class="breaker"></div>
+<h3>Voorbeeld</h3>
+<pre>def optellen():
+    x = 1 + 1
+    print(x)</pre>
+<h3>OPDRACHT</h3>
+<pre># Functiedefinities
+def gooi_dobbelsteen():
+    print(f"Je hebt een {4} gegooid")
+
+# Zet de code om uit te voeren hieronder
+print(f"De datum en tijd is {datetime.now()}")
+gooi_dobbelsteen()</pre>
+<p><em>Test:</em> voer meerdere keren uit; de uitkomst blijft 4.</p>
+<!-- Tweaks 2–6 -->
+<button aria-controls="tweaks-3" aria-expanded="false" class="tweak-toggle no-print" type="button">Toon tips</button><div class="tweaks is-hidden" id="tweaks-3">
+<div class="mini">
+<div><h4>Wat moet ik hier doen?</h4>
+<ul>
+<li>Schrijf een functie en roep die onderaan aan.</li>
+<li>Voer 2× uit en bekijk de output.</li>
+</ul>
+</div>
+<div><h4>Succescheck</h4>
+<ul>
+<li>☐ Functie bestaat en wordt aangeroepen.</li>
+<li>☐ Je ziet elke keer “Je hebt een 4 gegooid”.</li>
+</ul>
+</div>
+<div><h4>Veelgemaakte fout → fix</h4>
+<div class="tag">Functienaam zonder haakjes bij aanroep → gebruik <code>gooi_dobbelsteen()</code>.</div>
+</div>
+<div><h4>Verwachte output</h4>
+<div class="expected">De datum en tijd is ...<br/>Je hebt een 4 gegooid</div>
+</div>
+<div><h4>Timer &amp; hulp</h4>
+<div class="tag">⏱️ 6–8 min</div> <span>Vast? → Check inspringen: 4 spaties binnen de functie.</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 4 -->
+<article class="card" data-opdracht="4">
+<h2>4) Willekeur met random</h2>
+<h3>Kort</h3>
+<p>Met <code>randint(1,6)</code> kies je een willekeurig getal tussen 1 en 6. Sla het op in <code>worp</code> en laat 🔥 zien zoveel als de worp.</p>
+<div class="breaker"></div>
+<h3>OPDRACHT</h3>
+<pre># Functiedefinities
+def gooi_dobbelsteen():
+    print(f"Je hebt een {randint(1, 6)} gegooid")</pre>
+<pre># Functiedefinities
+def gooi_dobbelsteen():
+    worp = randint(1,6)</pre>
+<pre># Functiedefinities
+def gooi_dobbelsteen():
+    worp = randint(1,6)
+    print(f"Je hebt een {worp} {vuur * worp} gegooid")</pre>
+<!-- Tweaks 2–6 -->
+<button aria-controls="tweaks-4" aria-expanded="false" class="tweak-toggle no-print" type="button">Toon tips</button><div class="tweaks is-hidden" id="tweaks-4">
+<div class="mini">
+<div><h4>Wat moet ik hier doen?</h4>
+<ul>
+<li>Maak <code>worp</code> met <code>randint(1,6)</code>.</li>
+<li>Print de worp én <code>vuur * worp</code>.</li>
+</ul>
+</div>
+<div><h4>Succescheck</h4>
+<ul>
+<li>☐ Worp verandert bij opnieuw uitvoeren.</li>
+<li>☐ Aantal 🔥 is gelijk aan de worp.</li>
+</ul>
+</div>
+<div><h4>Veelgemaakte fout → fix</h4>
+<div class="tag"><code>worp</code> als tekst gebruiken → zorg dat <code>worp</code> een getal is (van <code>randint</code>).</div>
+</div>
+<div><h4>Verwachte output</h4>
+<div class="expected">Je hebt een 5 🔥🔥🔥🔥🔥 gegooid</div>
+</div>
+<div><h4>Timer &amp; hulp</h4>
+<div class="tag">⏱️ 6–8 min</div> <span>Vast? → Print tussendoor <code>worp</code> om te zien wat erin zit.</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 5 -->
+<article class="card" data-opdracht="5">
+<h2>5) Invoer met input()</h2>
+<h3>Kort</h3>
+<p><code>input()</code> vraagt de gebruiker iets in te tikken (tekst). Gebruik die tekst om het aantal zijden te tonen en om te zetten met <code>int(...)</code>.</p>
+<div class="breaker"></div>
+<h3>OPDRACHT</h3>
+<pre># Functiedefinities
+def gooi_dobbelsteen():
+    aantal_zijden = input("Hoeveel zijden heeft jouw dobbelsteen?:")
+    print(f"Dat is een D {aantal_zijden}")
+    worp = randint(1,6)
+    print(f"Je hebt een {worp} {vuur * worp} gegooid")</pre>
+<p><em>Test:</em> klik op Run, typ een aantal zijden in en druk op Enter.</p>
+<h3>Vervolg (omzetten naar int)</h3>
+<pre># Functiedefinities
+def gooi_dobbelsteen():
+    aantal_zijden = input('Hoeveel zijden heeft jouw dobbelsteen?:")
+    print(f"Dat is een D {aantal_zijden}")
+    worp = randint(1, int(aantal_zijden))
+    print(f"Je hebt een {worp} {vuur * worp} gegooid")</pre>
+<!-- Tweaks 2–6 -->
+<button aria-controls="tweaks-5" aria-expanded="false" class="tweak-toggle no-print" type="button">Toon tips</button><div class="tweaks is-hidden" id="tweaks-5">
+<div class="mini">
+<div><h4>Wat moet ik hier doen?</h4>
+<ul>
+<li>Vraag het aantal zijden en toon het terug.</li>
+<li>Zet de invoer om met <code>int(...)</code> en gooi met dat aantal.</li>
+</ul>
+</div>
+<div><h4>Succescheck</h4>
+<ul>
+<li>☐ Invoer gevraagd en weergegeven.</li>
+<li>☐ Worp ligt binnen 1…(gekozen aantal).</li>
+</ul>
+</div>
+<div><h4>Veelgemaakte fout → fix</h4>
+<div class="tag"><code>ValueError</code> bij tekst → typ een <b>geheel getal</b> (bijv. 6).</div>
+</div>
+<div><h4>Verwachte output</h4>
+<div class="expected">Dat is een D 6<br/>Je hebt een 4 🔥🔥🔥🔥 gegooid</div>
+</div>
+<div><h4>Timer &amp; hulp</h4>
+<div class="tag">⏱️ 10–12 min</div> <span>Vast? → Print tussendoor het type: <code>print(type(aantal_zijden))</code>.</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 6 -->
+<article class="card" data-opdracht="6">
+<h2>6) Schrijf &amp; reflecteer</h2>
+<h3>Kort</h3>
+<p>Roep je functie aan en voeg zelf zinnen toe met f-strings.</p>
+<div class="breaker"></div>
+<h3>OPDRACHT</h3>
+<pre>gooi_dobbelsteen()
+print(f"Ik  ...")
+print(f"... maakt mij ")
+print(f"Ik wil graag ... maken met {python}")</pre>
+<p class="footer">Uitdaging: verzin een eigen uitbreiding. ✨</p>
+<!-- Tweaks 2–6 -->
+<button aria-controls="tweaks-6" aria-expanded="false" class="tweak-toggle no-print" type="button">Toon tips</button><div class="tweaks is-hidden" id="tweaks-6">
+<div class="mini">
+<div><h4>Wat moet ik hier doen?</h4>
+<ul>
+<li>Roep je functie aan en schrijf 3 reflectieregels.</li>
+<li>Noem minstens één idee voor een volgende stap.</li>
+</ul>
+</div>
+<div><h4>Succescheck</h4>
+<ul>
+<li>☐ 3 zinnen met termen uit de les (functie / input / randint).</li>
+<li>☐ Eén concrete volgende stap genoemd.</li>
+</ul>
+</div>
+<div><h4>Veelgemaakte fout → fix</h4>
+<div class="tag">Te algemeen → noem wat precies werkte/niet werkte.</div>
+</div>
+<div><h4>Verwachte output</h4>
+<div class="expected">Ik wil graag ... maken met Python 🐍</div>
+</div>
+<div><h4>Timer &amp; hulp</h4>
+<div class="tag">⏱️ 6–8 min</div> <span>Vast? → Kijk terug naar de dikgedrukte woorden op de kaart.</span>
+</div>
+</div>
+</div>
+</article>
+<!-- (Optioneel) Lege extra kaart voor notities / docent -->
+<article class="card" data-opdracht="n">
+<h2>Notities</h2>
+<p>Schrijf hier je ideeën, bugs of uitbreidingen op tijdens het werken.</p>
+<pre># Idee:
+# -
+# -
+# -</pre>
+</article>
+<article class="card" data-opdracht="c">
+<h2>Checklist</h2>
+<ul>
+<li>Print “Hallo” en gebruik een f-string met <code>{wereld}</code></li>
+<li>Reken uit: <code>3 * 9</code> en toon <code>datetime.now()</code></li>
+<li>Maak en roep <code>gooi_dobbelsteen()</code> aan</li>
+<li>Gebruik <code>randint</code> en <code>vuur * worp</code></li>
+<li>Vraag invoer met <code>input()</code> en gebruik <code>int(...)</code></li>
+</ul>
+</article>
+</section>
+<footer class="footer" style="margin-top:28px;">
+    Bron: opdrachten afkomstig uit het lesdocument “Hallo 🌍🌎🌏” (Raspberry Pi Foundation). Opdrachten zijn inhoudelijk behouden.
+  </footer>
+<script>
+    function printPair(pair){
+      const cls = pair === '12' ? 'print-12' : 'print-34';
+      document.body.classList.add(cls);
+      const after = () => { document.body.classList.remove(cls); window.removeEventListener('afterprint', after); };
+      window.addEventListener('afterprint', after);
+      window.print();
+    }
+  </script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tweak-toggle').forEach(btn => {
+    const id = btn.getAttribute('aria-controls');
+    const panel = document.getElementById(id);
+    const update = (expanded) => {
+      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      if (expanded) {
+        panel.classList.remove('is-hidden');
+        btn.textContent = 'Verberg tips';
+      } else {
+        panel.classList.add('is-hidden');
+        btn.textContent = 'Toon tips';
+      }
+    };
+    // default collapsed
+    update(false);
+    btn.addEventListener('click', () => {
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+      update(!isOpen);
+    });
+  });
+});
+</script></body>
+</html>
